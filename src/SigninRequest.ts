@@ -33,7 +33,7 @@ export interface SigninRequestArgs {
     client_secret?: string;
     extraTokenParams?: Record<string, unknown>;
     skipUserInfo?: boolean;
-    nonce?: string; 
+    nonce?: string;
 
     /** custom "state", which can be used by a caller to have "data" round tripped */
     state_data?: unknown;
@@ -45,8 +45,8 @@ export interface SigninRequestArgs {
 export class SigninRequest {
     private readonly _logger = new Logger("SigninRequest");
 
-    public readonly url: string;
-    public readonly state: SigninState;
+    public url!: string;
+    public state!: SigninState;
 
     public constructor({
         // mandatory
@@ -82,16 +82,35 @@ export class SigninRequest {
             this._logger.error("ctor: No authority passed");
             throw new Error("authority");
         }
+    }
 
-        this.state = new SigninState({
+    public async build({
+        // mandatory
+        url, authority, client_id, redirect_uri, response_type, scope,
+        // optional
+        state_data, response_mode, request_type, client_secret, nonce,
+        skipUserInfo,
+        extraQueryParams,
+        extraTokenParams,
+        ...optionalParams
+    }: SigninRequestArgs) {
+        const signinStateParams = {
             data: state_data,
             request_type,
             code_verifier: true,
-            client_id, authority, redirect_uri,
+            client_id,
+            authority,
+            redirect_uri,
             response_mode,
-            client_secret, scope, extraTokenParams,
+            client_secret,
+            scope,
+            extraTokenParams,
             skipUserInfo,
-        });
+        };
+
+        const signinStateUnbuilt = new SigninState(signinStateParams);
+
+        this.state = await signinStateUnbuilt.build();
 
         const parsedUrl = new URL(url);
         parsedUrl.searchParams.append("client_id", client_id);
@@ -115,5 +134,7 @@ export class SigninRequest {
         }
 
         this.url = parsedUrl.href;
+
+        return this;
     }
 }

@@ -12,7 +12,7 @@ export class SigninState extends State {
     /** The same code_verifier that was used to obtain the authorization_code via PKCE. */
     public readonly code_verifier: string | undefined;
     /** Used to secure authorization code grants via Proof Key for Code Exchange (PKCE). */
-    public readonly code_challenge: string | undefined;
+    public code_challenge: string | undefined;
 
     // to ensure state still matches settings
     /** @see {@link OidcClientSettings.authority} */
@@ -57,10 +57,6 @@ export class SigninState extends State {
             this.code_verifier = args.code_verifier;
         }
 
-        if (this.code_verifier) {
-            this.code_challenge = CryptoUtils.generateCodeChallenge(this.code_verifier);
-        }
-
         this.authority = args.authority;
         this.client_id = args.client_id;
         this.redirect_uri = args.redirect_uri;
@@ -70,6 +66,11 @@ export class SigninState extends State {
 
         this.response_mode = args.response_mode;
         this.skipUserInfo = args.skipUserInfo;
+    }
+
+    public async build() {
+        this.code_challenge = await CryptoUtils.generateCodeChallenge(this.code_verifier!);
+        return this;
     }
 
     public toStorageString(): string {

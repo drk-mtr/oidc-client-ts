@@ -90,7 +90,7 @@ export class OidcClient {
         id_token_hint,
         login_hint,
         skipUserInfo,
-        nonce, 
+        nonce,
         response_type = this.settings.response_type,
         scope = this.settings.scope,
         redirect_uri = this.settings.redirect_uri,
@@ -113,7 +113,7 @@ export class OidcClient {
         const url = await this.metadataService.getAuthorizationEndpoint();
         logger.debug("Received authorization endpoint", url);
 
-        const signinRequest = new SigninRequest({
+        const signinRequestParams = {
             url,
             authority: this.settings.authority,
             client_id: this.settings.client_id,
@@ -126,7 +126,10 @@ export class OidcClient {
             client_secret: this.settings.client_secret,
             skipUserInfo,
             nonce,
-        });
+        };
+
+        const signinRequestUnbuilt = new SigninRequest(signinRequestParams);
+        const signinRequest = await signinRequestUnbuilt.build(signinRequestParams);
 
         const signinState = signinRequest.state;
         await this.settings.stateStore.set(signinState.id, signinState.toStorageString());
